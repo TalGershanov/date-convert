@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hebrew Date Converter</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2f4f7;
+      font-family: system-ui, sans-serif;
+    }
+    .box {
+      width: 320px;
+      padding: 28px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    h1 { margin: 0 0 20px; font-size: 20px; }
+    input, button {
+      font: inherit;
+      padding: 8px 12px;
+      margin: 4px;
+    }
+    #result { margin-top: 20px; min-height: 60px; }
+    #hebrew { font-size: 28px; }
+    #details { margin-top: 6px; color: #666; font-size: 14px; }
+    #error { color: #c0392b; }
+    #reset { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Gregorian to Hebrew date</h1>
+    <input type="date" id="date">
+    <button id="convert">Convert</button>
+    <div id="result">
+      <div id="hebrew" dir="rtl"></div>
+      <div id="details"></div>
+      <div id="error"></div>
+    </div>
+    <button id="reset">Start Over</button>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function show(hebrew, details, error) {
+      $("hebrew").textContent = hebrew;
+      $("details").textContent = details;
+      $("error").textContent = error;
+    }
+
+    $("convert").onclick = async () => {
+      const date = $("date").value;
+      if (!date) return;
+      try {
+        const response = await fetch("/api/convert", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({date}),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          const detail = typeof data.detail === "string"
+            ? data.detail : "Invalid date";
+          return show("", "", detail);
+        }
+        const {day, month, year} = data.hebrew_parts;
+        const events = data.events.length ? " · " + data.events.join(", ") : "";
+        show(data.hebrew, `${day} ${month} ${year}${events}`, "");
+      } catch (e) {
+        show("", "", "Could not reach the server");
+      }
+    };
+
+    $("reset").onclick = () => {
+      $("date").value = "";
+      show("", "", "");
+    };
+  </script>
+</body>
+</html>
