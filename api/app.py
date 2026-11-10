@@ -3,6 +3,7 @@ import datetime
 
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from logic.converter import convert_to_hebrew
@@ -25,3 +26,7 @@ def convert(request: ConvertRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
     except httpx.HTTPError:
         raise HTTPException(status_code=502, detail="Hebcal unavailable")
+
+
+# Mounted last so that /api/convert takes precedence.
+app.mount("/", StaticFiles(directory="front", html=True), name="front")
